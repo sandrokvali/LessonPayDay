@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPay 2026 | Focused Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <script>
+  // Source - https://stackoverflow.com/a
+// Posted by Michael Zaporozhets, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-01-21, License - CC BY-SA 4.0
+
+  function detectMob() {
+    const toMatch = [
+        /Android/i,
+        /webOS/i,
+        /iPhone/i,
+        /iPad/i,
+        /iPod/i,
+        /BlackBerry/i,
+        /Windows Phone/i
+    ];
+    
+    return toMatch.some((toMatchItem) => {
+        return navigator.userAgent.match(toMatchItem);
+    });
+}
+
+
+  if(detectMob()) {
+    window.location.replace("mobile/mobile.html");
+  }
+
+    </script>
+
+    <div id="syncStatus">Syncing Data...</div>
+
+    <header class="navbar">
+        <div class="logo">EduPay <span>2026</span></div>
+        <div class="nav-btns">
+            <button class="btn btn-outline" onclick="openPaySummary()">📅 Pay Forecast</button>
+            <button class="btn btn-primary" onclick="openModal('addModal')">+ Add Schedule</button>
+        </div>
+    </header>
+
+    <main id="calendarContainer" class="scroller"></main>
+
+    <div id="addModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>New Weekly Schedule</h3>
+                <p>Set up a recurring lesson for the year.</p>
+            </div>
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Subject</label>
+                    <select id="subIn">
+                        <option>English</option><option>Chemistry</option>
+                        <option>Georgian</option><option>Biology</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="startIn">
+                    </div>
+                    <div class="input-group">
+                        <label>Time</label>
+                        <input type="time" id="timeIn" value="10:00">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary full-width" onclick="saveSchedule()">Create Schedule</button>
+                <button class="btn btn-text full-width" onclick="closeModal('addModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="summaryModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Payment Forecast</h3>
+                <p>Every 8th lesson for English & Chemistry.</p>
+            </div>
+            <div id="summaryList" class="scroll-list"></div>
+            <button class="btn btn-primary full-width" onclick="closeModal('summaryModal')">Close</button>
+        </div>
+    </div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-card">
+            <h3 id="dayTitle">Date</h3>
+            
+            <div id="payAlertBox"></div>
+
+            <div class="add-one-section">
+                <label>Add Single Lesson:</label>
+                <div style="display:flex; gap:5px;">
+                    <select id="singleSubIn" style="flex:1">
+                        <option>English</option><option>Chemistry</option>
+                        <option>Georgian</option><option>Biology</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addSingleLesson()">Add</button>
+                </div>
+            </div>
+            <hr>
+            <div id="dayList"></div>
+            <button class="btn btn-text full-width" onclick="closeModal('dayModal')">Close</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

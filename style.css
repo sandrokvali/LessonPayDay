@@ -1,0 +1,50 @@
+:root {
+    --main: #6366f1; --bg: #f8fafc; --text: #1e293b;
+    --eng: #3b82f6; --chem: #8b5cf6; --geo: #10b981; --bio: #f43f5e;
+    --pay-bg: #fffbeb; --pay-border: #f59e0b;
+}
+
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+.navbar { position: fixed; top: 0; width: 100%; height: 75px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid #e2e8f0; z-index: 1000; box-sizing: border-box; }
+.logo { font-weight: 800; color: var(--main); font-size: 1.4rem; }
+.logo span { color: #94a3b8; }
+
+.scroller { margin-top: 100px; padding: 20px 40px; display: flex; flex-direction: column; gap: 50px; }
+.month-label { font-size: 1.8rem; font-weight: 800; margin-bottom: 20px; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
+
+.wd { background: #f8fafc; text-align: center; padding: 15px; font-weight: 700; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+.day { min-height: 120px; border: 0.5px solid #f1f5f9; padding: 10px; cursor: pointer; position: relative; }
+.day-num { font-size: 0.9rem; font-weight: 700; color: #cbd5e1; }
+
+/* Pay Day Highlight */
+.pay-day { background: var(--pay-bg); box-shadow: inset 0 0 0 2px var(--pay-border); }
+
+.lesson { font-size: 0.75rem; padding: 5px 10px; border-radius: 8px; color: white; margin-top: 6px; font-weight: 700; }
+.English { background: var(--eng); } .Chemistry { background: var(--chem); }
+.Georgian { background: var(--geo); } .Biology { background: var(--bio); }
+
+/* Day Modal Pay Alert */
+#payAlertBox { display: none; background: var(--pay-bg); border: 1px solid var(--pay-border); padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: 800; color: #9a3412; }
+
+.modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 2000; justify-content: center; align-items: center; }
+.modal-card { background: white; padding: 35px; border-radius: 24px; width: 450px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.modal-header h3 { margin: 0; }
+.input-section { display: flex; flex-direction: column; gap: 15px; }
+.input-row { display: flex; gap: 15px; }
+.input-group { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+label { font-size: 0.8rem; font-weight: 700; color: #475569; }
+input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; }
+
+.scroll-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.forecast-item { display: flex; justify-content: space-between; padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; }
+.forecast-item.English { background: #eff6ff; color: var(--eng); }
+.forecast-item.Chemistry { background: #f5f3ff; color: var(--chem); }
+
+.btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+.btn-primary { background: var(--main); color: white; }
+.btn-outline { background: white; border: 1px solid #e2e8f0; }
+.full-width { width: 100%; }
+
+#syncStatus { position: fixed; bottom: 25px; right: 25px; background: #1e293b; color: white; padding: 8px 20px; border-radius: 25px; z-index: 3000; font-size: 0.8rem; }
