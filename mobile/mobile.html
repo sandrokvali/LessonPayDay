@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduPay Mobile</title>
+    <link rel="stylesheet" href="mobile.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <header class="mobile-header">
+        <div class="logo">EduPay <span>2026</span></div>
+        <div id="syncIndicator">Synced</div>
+    </header>
+
+    <main id="calendarContainer" class="mobile-scroller">
+        </main>
+
+    <nav class="bottom-nav">
+        <button class="pay-menu-btn" onclick="openPaySummary()">
+            <span>📅</span> View Pay Forecast
+        </button>
+    </nav>
+
+    <div id="summaryModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Pay Forecast</h3>
+                <p>English & Chemistry (8-Lesson Rule)</p>
+            </div>
+            <div id="summaryList" class="forecast-list"></div>
+            <button class="btn-close" onclick="closeModal('summaryModal')">Dismiss</button>
+        </div>
+    </div>
+
+    <div id="dayModal" class="modal">
+        <div class="modal-card">
+            <h3 id="dayTitle">Date</h3>
+            <div id="payAlert"></div>
+            <div id="dayLessons"></div>
+            <button class="btn-close" onclick="closeModal('dayModal')">Close</button>
+        </div>
+    </div>
+
+    <script src="mobile.js"></script>
+</body>
+</html>

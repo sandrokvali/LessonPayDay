@@ -1,0 +1,62 @@
+:root {
+    --main: #6366f1; --bg: #f8fafc; --text: #1e293b;
+    --eng: #3b82f6; --chem: #8b5cf6; --geo: #10b981; --bio: #f43f5e;
+    --pay-bg: #fffbeb; --pay-border: #f59e0b;
+}
+
+body { 
+    margin: 0; font-family: -apple-system, system-ui, sans-serif; 
+    background: var(--bg); color: var(--text); overflow-x: hidden;
+}
+
+/* Fixed Mobile Header */
+.mobile-header {
+    position: fixed; top: 0; width: 100%; height: 60px;
+    background: white; display: flex; justify-content: space-between;
+    align-items: center; padding: 0 20px; box-sizing: border-box;
+    border-bottom: 1px solid #e2e8f0; z-index: 1000;
+}
+.logo { font-weight: 800; color: var(--main); font-size: 1.2rem; }
+.logo span { color: #94a3b8; }
+#syncIndicator { font-size: 0.7rem; color: #10b981; font-weight: 700; text-transform: uppercase; }
+
+/* Continuous Scroller */
+.mobile-scroller { margin-top: 60px; padding: 15px; padding-bottom: 100px; }
+.month-label { font-size: 1.4rem; font-weight: 800; margin: 25px 0 10px; color: var(--text); }
+
+/* Calendar Grid - Mobile Optimized */
+.grid { 
+    display: grid; grid-template-columns: repeat(7, 1fr); 
+    background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;
+}
+.wd { background: #f8fafc; text-align: center; padding: 10px 0; font-weight: 700; font-size: 0.65rem; color: #94a3b8; }
+.day { min-height: 85px; border: 0.5px solid #f1f5f9; padding: 4px; cursor: pointer; position: relative; }
+.day-num { font-size: 0.75rem; font-weight: 700; color: #cbd5e1; }
+.today { background: #eff6ff; box-shadow: inset 0 0 0 2px var(--main); }
+
+/* Payment Highlights */
+.pay-day { background: var(--pay-bg); border: 1px solid var(--pay-border) !important; }
+
+.lesson-dot { height: 6px; width: 6px; border-radius: 50%; display: inline-block; margin-right: 2px; }
+.lesson-label { font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; color: white; margin-top: 2px; font-weight: 700; display: block; overflow: hidden; white-space: nowrap; }
+.English { background: var(--eng); } .Chemistry { background: var(--chem); }
+.Georgian { background: var(--geo); } .Biology { background: var(--bio); }
+
+/* Bottom Menu */
+.bottom-nav {
+    position: fixed; bottom: 0; width: 100%; height: 80px;
+    background: white; border-top: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: center; padding: 0 20px; box-sizing: border-box; z-index: 1000;
+}
+.pay-menu-btn {
+    width: 100%; max-width: 400px; padding: 15px; background: var(--main);
+    color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1rem; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+/* Modals */
+.modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 2000; justify-content: center; align-items: flex-end; }
+.modal-card { background: white; width: 100%; border-radius: 25px 25px 0 0; padding: 30px; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
+.forecast-list { margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.forecast-item { display: flex; justify-content: space-between; padding: 15px; border-radius: 12px; font-weight: 700; background: #f1f5f9; }
+#payAlert { background: var(--pay-bg); border: 1px solid var(--pay-border); padding: 15px; border-radius: 12px; margin-bottom: 15px; color: #9a3412; font-weight: 800; display: none; text-align: center; }
+.btn-close { width: 100%; padding: 15px; border: none; background: #f1f5f9; border-radius: 12px; font-weight: 700; margin-top: 10px; }
