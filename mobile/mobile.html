@@ -3,14 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EduPay Mobile</title>
+    <title>გაკვეთილების გადასახადები</title>
     <link rel="stylesheet" href="mobile.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
+       <script>
+  function detectMob() {
+    const toMatch = [
+        /Android/i,
+        /webOS/i,
+        /iPhone/i,
+        /iPad/i,
+        /iPod/i,
+        /BlackBerry/i,
+        /Windows Phone/i
+    ];
+    
+    return toMatch.some((toMatchItem) => {
+        return navigator.userAgent.match(toMatchItem);
+    });
+}
+
+
+  if(!detectMob()) {
+    window.location.replace("/");
+  }
+
+    </script>
+
     <header class="mobile-header">
-        <div class="logo">EduPay <span>2026</span></div>
+        <div class="logo">გაკვეთილები <span>2026</span></div>
         <div id="syncIndicator">Synced</div>
     </header>
 
@@ -19,18 +43,17 @@
 
     <nav class="bottom-nav">
         <button class="pay-menu-btn" onclick="openPaySummary()">
-            <span>📅</span> View Pay Forecast
+            <span>📅</span> გადასახადები
         </button>
     </nav>
 
     <div id="summaryModal" class="modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>Pay Forecast</h3>
-                <p>English & Chemistry (8-Lesson Rule)</p>
+                <h3>გადასახადები</h3>
             </div>
             <div id="summaryList" class="forecast-list"></div>
-            <button class="btn-close" onclick="closeModal('summaryModal')">Dismiss</button>
+            <button class="btn-close" onclick="closeModal('summaryModal')">გაუქმება</button>
         </div>
     </div>
 
@@ -39,7 +62,7 @@
             <h3 id="dayTitle">Date</h3>
             <div id="payAlert"></div>
             <div id="dayLessons"></div>
-            <button class="btn-close" onclick="closeModal('dayModal')">Close</button>
+            <button class="btn-close" onclick="closeModal('dayModal')">დახურვა</button>
         </div>
     </div>
 

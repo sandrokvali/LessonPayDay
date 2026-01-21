@@ -16,7 +16,6 @@ function fetchData() {
 
 function expandSchedules() {
     let list = [];
-    // Recurring
     if (data.schedules) {
         Object.keys(data.schedules).forEach(id => {
             const s = data.schedules[id];
@@ -30,7 +29,6 @@ function expandSchedules() {
             }
         });
     }
-    // Singles
     if (data.exceptions) {
         Object.keys(data.exceptions).forEach(key => {
             if(key.includes("SINGLE_") && data.exceptions[key] !== 'deleted') {
@@ -47,7 +45,6 @@ function renderCalendar() {
     const all = expandSchedules();
     const now = new Date();
 
-    // Calculate Payments
     let counters = { English: 0, Chemistry: 0 };
     payDaysMap = {};
     all.forEach(occ => {
@@ -61,7 +58,6 @@ function renderCalendar() {
         }
     });
 
-    // Render Months
     for (let i = 0; i < 12; i++) {
         let d = new Date(now.getFullYear(), i, 1);
         container.append(buildMonth(d, all));
@@ -96,12 +92,12 @@ function buildMonth(date, all) {
 
 function openDay(dateStr) {
     $('#dayTitle').text(dateStr);
-    const list = $('#dayLessons').empty();
+    const list = $('#dayList').empty();
     const alert = $('#payAlert').hide();
     const all = expandSchedules();
 
     if(payDaysMap[dateStr]) {
-        alert.show().text(`⚠️ PAYMENT DUE: ${payDaysMap[dateStr].join(' & ')}`);
+        alert.show().text(`⚠️ გასახდელია: ${payDaysMap[dateStr].join(' და ')}`);
     }
 
     all.filter(o => o.date.toDateString() === dateStr).forEach(o => {
@@ -112,13 +108,28 @@ function openDay(dateStr) {
     $(`#dayModal`).css('display', 'flex');
 }
 
+// Updated to match Desktop Forecast style
 function openPaySummary() {
     const list = $('#summaryList').empty();
+    let found = false;
+    
+    // Sort all calculated pay days chronologically
     Object.keys(payDaysMap).sort((a,b) => new Date(a) - new Date(b)).forEach(dateKey => {
+        found = true;
         payDaysMap[dateKey].forEach(sub => {
-            list.append(`<div class="forecast-item"><span>${sub}</span><span>${dateKey}</span></div>`);
+            const formattedDate = new Date(dateKey).toLocaleDateString('en-US', { 
+                month: 'short', day: 'numeric', year: 'numeric' 
+            });
+            list.append(`
+                <div class="forecast-item ${sub}">
+                    <span>${sub}</span>
+                    <span>${formattedDate}</span>
+                </div>
+            `);
         });
     });
+    
+    if(!found) list.append("<p style='text-align:center; color:#94a3b8;'>No payments scheduled.</p>");
     $(`#summaryModal`).css('display', 'flex');
 }
 

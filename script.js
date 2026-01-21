@@ -107,7 +107,7 @@ function openDay(dateStr) {
 
     // Show payment notification if day is highlighted
     if(payInfoStore[dateStr]) {
-        alertBox.show().html(`⚠️ გადასახდელია:<br>${payInfoStore[dateStr].join(' & ')}`);
+        alertBox.show().html(`⚠️ გადასახდელია:<br>${payInfoStore[dateStr].join(' და ')}`);
     }
 
     dayOcc.forEach(o => {
