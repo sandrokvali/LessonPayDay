@@ -33,6 +33,23 @@ body {
 
 .pay-day { background: var(--pay-bg); border: 1px solid var(--pay-border) !important; }
 
+/* Georgian paydate (green) */
+.georgian-pay { background: #ecfdf5 !important; border-color: var(--geo) !important; }
+
+/* Lesson due marker on mobile */
+.lesson-label.due { padding-right:6px; }
+.lesson-label.due::after { content: ""; display:inline-block; margin-left:6px; width:7px; height:7px; border-radius:50%; }
+
+/* Subject-specific due markers (mobile) */
+.lesson-label.English.due { border: 4px dashed rgba(59,130,246,0.95); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson-label.English.due::after { background: var(--eng); width:9px; height:9px; }
+.lesson-label.Chemistry.due { border: 4px dashed rgba(139,92,246,0.95); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson-label.Chemistry.due::after { background: var(--chem); width:9px; height:9px; }
+.lesson-label.Georgian.due { border: 4px dashed rgba(16,185,129,0.95); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson-label.Georgian.due::after { background: var(--geo); width:9px; height:9px; }
+.lesson-label.Biology.due { border: 4px dashed rgba(244,63,94,0.95); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson-label.Biology.due::after { background: var(--bio); width:9px; height:9px; }
+
 .lesson-label { font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; color: white; margin-top: 2px; font-weight: 700; display: block; overflow: hidden; white-space: nowrap; }
 .English { background: var(--eng); } .Chemistry { background: var(--chem); }
 .Georgian { background: var(--geo); } .Biology { background: var(--bio); }
@@ -49,9 +66,9 @@ body {
 
 /* Modal and Forecast List Style (Desktop Match) */
 .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 2000; justify-content: center; align-items: flex-end; }
-.modal-card { background: white; width: 100%; border-radius: 25px 25px 0 0; padding: 30px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; }
+.modal-card { background: white; width: 100%; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; max-height: 85vh; display: flex; flex-direction: column; gap:12px; }
 
-.forecast-list { margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.forecast-list { margin: 8px 0; display: flex; flex-direction: column; gap: 10px; overflow:auto; flex: 1 1 auto; }
 .forecast-item { 
     display: flex; justify-content: space-between; 
     padding: 15px 20px; border-radius: 12px; font-weight: 700; 
@@ -59,6 +76,32 @@ body {
 }
 .forecast-item.English { background: #eff6ff; color: #3b82f6; }
 .forecast-item.Chemistry { background: #f5f3ff; color: #8b5cf6; }
+.forecast-item.Georgian { background: #ecfdf5; color: var(--geo); }
+.forecast-item.Biology { background: #fff1f2; color: var(--bio); }
 
-.btn-close { width: 100%; padding: 15px; border: none; background: #f1f5f9; border-radius: 12px; font-weight: 700; margin-top: 10px; }
+.btn-close { width: 100%; padding: 15px; border: none; background: #f1f5f9; border-radius: 12px; font-weight: 700; margin-top: 10px; position: sticky; bottom: 0; z-index: 20; }
 #payAlert { background: var(--pay-bg); border: 1px solid var(--pay-border); padding: 15px; border-radius: 12px; margin-bottom: 15px; color: #9a3412; font-weight: 800; display: none; text-align: center; }
+
+/* Small button for inline actions */
+.btn-small {
+    background: transparent;
+    border: 1px solid rgba(15,23,42,0.08);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-weight: 800;
+    color: var(--main);
+    cursor: pointer;
+}
+.btn-small:hover { background: rgba(99,102,241,0.06); }
+
+/* Primary button used in modals */
+.btn-primary {
+    background: var(--main);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.btn-primary:hover { opacity: 0.95; }

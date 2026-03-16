@@ -4,6 +4,31 @@ let data = { schedules: {}, exceptions: {} };
 const FIXED_RATE = 8;
 const PAY_SUBJECTS = ['English', 'Chemistry'];
 let payDaysMap = {}; 
+let showAllMonthsMobile = false;
+
+function subjVar(subject) {
+    if(!subject) return 'eng';
+    const s = subject.toLowerCase();
+    if(s.startsWith('chem')) return 'chem';
+    return s.substring(0,3);
+}
+
+function isPaidMobile(dateStr, subject) {
+    return data.exceptions && data.exceptions[`PAID_${dateStr}_${subject}`] === 'paid';
+}
+
+function unmarkPaidMobile(dateStr, subject) {
+    const key = `PAID_${dateStr}_${subject}`;
+    if(data.exceptions && data.exceptions[key]) {
+        delete data.exceptions[key];
+        // optimistic UI update
+        renderCalendar();
+        if($('#summaryModal').is(':visible')) openPaySummary();
+        if($('#dayModal').is(':visible')) openDay(dateStr);
+        // persist change
+        $.ajax({ url: DB_URL, type: 'PUT', data: JSON.stringify(data), success: () => fetchData() });
+    }
+}
 
 $(document).ready(() => { fetchData(); });
 
@@ -53,15 +78,43 @@ function renderCalendar() {
             if(counters[occ.subject] % FIXED_RATE === 0) {
                 const dKey = occ.date.toDateString();
                 if(!payDaysMap[dKey]) payDaysMap[dKey] = [];
-                payDaysMap[dKey].push(occ.subject);
+                if(!payDaysMap[dKey].includes(occ.subject)) payDaysMap[dKey].push(occ.subject);
             }
         }
     });
 
-    for (let i = 0; i < 12; i++) {
+    // Add Georgian fixed monthly paydate on the 27th of every month
+    for (let mi = 0; mi < 12; mi++) {
+        const pd = new Date(now.getFullYear(), mi, 27);
+        const pk = pd.toDateString();
+        if(!payDaysMap[pk]) payDaysMap[pk] = [];
+        if(!payDaysMap[pk].includes('Georgian')) payDaysMap[pk].push('Georgian');
+    }
+
+    const startMonth = showAllMonthsMobile ? 0 : now.getMonth();
+    for (let i = startMonth; i < 12; i++) {
         let d = new Date(now.getFullYear(), i, 1);
         container.append(buildMonth(d, all));
     }
+}
+
+function toggleFullCalendarMobile() {
+    showAllMonthsMobile = !showAllMonthsMobile;
+    const btn = document.getElementById('toggleCalendarBtnMobile');
+    if(btn) btn.textContent = showAllMonthsMobile ? 'Show Current' : 'Show Full';
+    renderCalendar();
+}
+
+function markPaidMobile(dateStr, subject) {
+    const key = `PAID_${dateStr}_${subject}`;
+    data.exceptions = data.exceptions || {};
+    data.exceptions[key] = 'paid';
+    // optimistic UI update
+    renderCalendar();
+    if($('#summaryModal').is(':visible')) openPaySummary();
+    if($('#dayModal').is(':visible')) openDay(dateStr);
+    // persist to DB
+    $.ajax({ url: DB_URL, type: 'PUT', data: JSON.stringify(data), success: () => fetchData() });
 }
 
 function buildMonth(date, all) {
@@ -76,14 +129,16 @@ function buildMonth(date, all) {
     for (let d = 1; d <= lastDate; d++) {
         const dObj = new Date(y, m, d);
         const dKey = dObj.toDateString();
-        const paySubs = payDaysMap[dKey];
+        const paySubs = payDaysMap[dKey] || [];
         const isToday = dKey === new Date().toDateString() ? 'today' : '';
-        
-        let cell = `<div class="day ${isToday} ${paySubs ? 'pay-day' : ''}" onclick="openDay('${dKey}')">
+        const georgianClass = paySubs.includes('Georgian') ? 'georgian-pay' : '';
+
+        let cell = `<div class="day ${isToday} ${paySubs.length ? 'pay-day' : ''} ${georgianClass}" onclick="openDay('${dKey}')">
                     <span class="day-num">${d}</span>`;
-        
+
         all.filter(o => o.date.toDateString() === dKey).forEach(o => {
-            cell += `<div class="lesson-label ${o.subject}">${o.subject}</div>`;
+            const dueClass = paySubs.includes(o.subject) ? 'due' : '';
+            cell += `<div class="lesson-label ${o.subject} ${dueClass}">${o.subject}${dueClass ? ' •' : ''}</div>`;
         });
         html += cell + `</div>`;
     }
@@ -92,18 +147,30 @@ function buildMonth(date, all) {
 
 function openDay(dateStr) {
     $('#dayTitle').text(dateStr);
-    const list = $('#dayList').empty();
-    const alert = $('#payAlert').hide();
+    const list = $('#dayLessons').empty();
+    const alert = $('#payAlert').hide().empty();
     const all = expandSchedules();
 
+
+    // Paid / Unpaid button in the calendar
     if(payDaysMap[dateStr]) {
-        alert.show().text(`⚠️ გასახდელია: ${payDaysMap[dateStr].join(' და ')}`);
+        // Show labels only on mobile; no Mark Paid / Unpay buttons
+        const unpaid = payDaysMap[dateStr].filter(sub => !isPaidMobile(dateStr, sub));
+        if(unpaid.length > 0) {
+            let parts = unpaid.map(sub => `
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span>⚠️</span>
+                    <div style="font-weight:700">${sub}</div>
+                </div>
+            `);
+            alert.show().html(parts.join(''));
+        }
     }
 
-    all.filter(o => o.date.toDateString() === dateStr).forEach(o => {
-        list.append(`<div class="forecast-item" style="border-left: 5px solid var(--${o.subject.toLowerCase().substring(0,3)})">${o.subject} Lesson</div>`);
+        all.filter(o => o.date.toDateString() === dateStr).forEach(o => {
+        const v = subjVar(o.subject);
+        list.append(`<div class="forecast-item" style="border-left: 5px solid var(--${v})">${o.subject} Lesson</div>`);
     });
-    
     if(list.children().length === 0) list.append("<p>No lessons today.</p>");
     $(`#dayModal`).css('display', 'flex');
 }
@@ -115,15 +182,19 @@ function openPaySummary() {
     
     // Sort all calculated pay days chronologically
     Object.keys(payDaysMap).sort((a,b) => new Date(a) - new Date(b)).forEach(dateKey => {
+        const subs = payDaysMap[dateKey];
+        if(!subs || subs.length === 0) return;
+        // exclude already-paid subjects so paid dates don't show
+        const unpaid = subs.filter(s => !isPaidMobile(dateKey, s));
+        if(unpaid.length === 0) return;
         found = true;
-        payDaysMap[dateKey].forEach(sub => {
+        unpaid.forEach(sub => {
             const formattedDate = new Date(dateKey).toLocaleDateString('en-US', { 
                 month: 'short', day: 'numeric', year: 'numeric' 
             });
             list.append(`
-                <div class="forecast-item ${sub}">
-                    <span>${sub}</span>
-                    <span>${formattedDate}</span>
+                <div class="forecast-item ${sub}" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong>${sub}</strong><div style="font-size:0.85rem; color:#64748b">${formattedDate}</div></div>
                 </div>
             `);
         });

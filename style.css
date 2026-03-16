@@ -21,6 +21,26 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color
 /* Pay Day Highlight */
 .pay-day { background: var(--pay-bg); box-shadow: inset 0 0 0 2px var(--pay-border); }
 
+/* Georgian paydate (green) */
+.georgian-pay { background: #ecfdf5 !important; box-shadow: inset 0 0 0 2px var(--geo) !important; }
+
+/* Lesson due marker */
+.lesson.due { padding-right: 6px; }
+.lesson.due::after { content: ""; display:inline-block; margin-left:8px; width:8px; height:8px; border-radius:50%; }
+
+/* Subject-specific due markers (outline + dot) */
+.lesson.English.due { border: 4px dashed var(--eng); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson.English.due::after { background: var(--eng); width:10px; height:10px; }
+.lesson.Chemistry.due { border: 4px dashed var(--chem); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson.Chemistry.due::after { background: var(--chem); width:10px; height:10px; }
+.lesson.Georgian.due { border: 4px dashed var(--geo); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson.Georgian.due::after { background: var(--geo); width:10px; height:10px; }
+.lesson.Biology.due { border: 4px dashed var(--bio); border-radius: 8px; padding: 6px 10px 6px 6px; }
+.lesson.Biology.due::after { background: var(--bio); width:10px; height:10px; }
+
+/* Today highlight (blue) */
+.today { background: #eff6ff; box-shadow: inset 0 0 0 2px var(--main); }
+
 .lesson { font-size: 0.75rem; padding: 5px 10px; border-radius: 8px; color: white; margin-top: 6px; font-weight: 700; }
 .English { background: var(--eng); } .Chemistry { background: var(--chem); }
 .Georgian { background: var(--geo); } .Biology { background: var(--bio); }
@@ -41,10 +61,14 @@ input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; f
 .forecast-item { display: flex; justify-content: space-between; padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; }
 .forecast-item.English { background: #eff6ff; color: var(--eng); }
 .forecast-item.Chemistry { background: #f5f3ff; color: var(--chem); }
+.forecast-item.Georgian { background: #ecfdf5; color: var(--geo); }
+.forecast-item.Biology { background: #fff1f2; color: var(--bio); }
 
 .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
 .btn-primary { background: var(--main); color: white; }
 .btn-outline { background: white; border: 1px solid #e2e8f0; }
+.btn-success { background: #10b981; color: white; }
+.btn-danger { background: #ef4444; color: white; }
 .full-width { width: 100%; }
 
 #syncStatus { position: fixed; bottom: 25px; right: 25px; background: #1e293b; color: white; padding: 8px 20px; border-radius: 25px; z-index: 3000; font-size: 0.8rem; }

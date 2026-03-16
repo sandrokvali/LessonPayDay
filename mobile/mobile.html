@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="/manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>გაკვეთილების გადასახადები</title>
@@ -27,7 +28,7 @@
 }
 
 
-  if(!detectMob()) {
+  if(! detectMob()) {
     window.location.replace("/");
   }
 
@@ -35,7 +36,10 @@
 
     <header class="mobile-header">
         <div class="logo">გაკვეთილები <span>2026</span></div>
-        <div id="syncIndicator">Synced</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn-small" id="toggleCalendarBtnMobile" onclick="toggleFullCalendarMobile()">Show Full</button>
+            <!-- <div id="syncIndicator">Synced</div> -->
+        </div>
     </header>
 
     <main id="calendarContainer" class="mobile-scroller">
