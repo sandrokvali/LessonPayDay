@@ -47,13 +47,22 @@ function fetchData() {
 function expandSchedules() {
     let list = [];
     if (data.schedules) {
-        Object.keys(data.schedules).forEach(id => {
-            const s = data.schedules[id];
+        Object.keys(data.schedules).forEach(sid => {
+            const s = data.schedules[sid];
             let d = new Date(s.startDate);
+            const end = s.endDate ? new Date(s.endDate) : null;
+            const timeStr = s.time || '';
+            const [hhRaw, mmRaw] = timeStr.split(':');
+            const hh = Number(hhRaw);
+            const mm = Number(mmRaw);
+            const timeMinutes = Number.isFinite(hh) && Number.isFinite(mm) ? (hh * 60 + mm) : Number.MAX_SAFE_INTEGER;
             while(d.getFullYear() <= 2026) {
-                const key = `${d.toDateString()}_${s.subject}`;
-                if(data.exceptions && data.exceptions[key] !== 'deleted') {
-                    list.push({ subject: s.subject, date: new Date(d) });
+                if(end && d > end) break;
+                const dateStr = d.toDateString();
+                const key = `SCHED_${sid}_${dateStr}`;
+                const legacyKey = `${dateStr}_${s.subject}`;
+                if(data.exceptions && data.exceptions[key] !== 'deleted' && data.exceptions[legacyKey] !== 'deleted') {
+                    list.push({ sid, subject: s.subject, date: new Date(d), time: timeStr, timeMinutes });
                 }
                 d.setDate(d.getDate() + 7);
             }
@@ -63,11 +72,17 @@ function expandSchedules() {
         Object.keys(data.exceptions).forEach(key => {
             if(key.includes("SINGLE_") && data.exceptions[key] !== 'deleted') {
                 const parts = key.split('_');
-                list.push({ subject: parts[2], date: new Date(parts[1]) });
+                list.push({ sid: 'one-off', subject: parts[2], date: new Date(parts[1]), time: '', timeMinutes: Number.MAX_SAFE_INTEGER });
             }
         });
     }
-    return list.sort((a,b) => a.date - b.date);
+    return list.sort((a, b) => {
+        const dateDiff = a.date - b.date;
+        if(dateDiff !== 0) return dateDiff;
+        const timeDiff = a.timeMinutes - b.timeMinutes;
+        if(timeDiff !== 0) return timeDiff;
+        return String(a.subject).localeCompare(String(b.subject));
+    });
 }
 
 function renderCalendar() {
@@ -173,9 +188,10 @@ function openDay(dateStr) {
         }
     }
 
-        all.filter(o => o.date.toDateString() === dateStr).forEach(o => {
+    all.filter(o => o.date.toDateString() === dateStr).forEach(o => {
         const v = subjVar(o.subject);
-        list.append(`<div class="forecast-item" style="border-left: 5px solid var(--${v})">${o.subject} Lesson</div>`);
+        const timeText = o.time ? ` <span style="color:#64748b; font-size:0.85rem;">(${o.time})</span>` : '';
+        list.append(`<div class="forecast-item" style="border-left: 5px solid var(--${v})">${o.subject} Lesson${timeText}</div>`);
     });
     if(list.children().length === 0) list.append("<p>No lessons today.</p>");
     $(`#dayModal`).css('display', 'flex');

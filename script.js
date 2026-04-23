@@ -5,6 +5,120 @@ const FIXED_RATE = 8;
 const PAY_SUBJECTS = ['English', 'Chemistry'];
 let payInfoStore = {}; // Stores payment status per date
 let showAllMonths = false;
+let editingScheduleId = null;
+let editingScheduleDay = '';
+
+function toISODateLocal(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function sameCalendarDay(a, b) {
+    return a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth()
+        && a.getDate() === b.getDate();
+}
+
+function isWeeklyOccurrence(schedule, occDate) {
+    const start = new Date(schedule.startDate);
+    start.setHours(0, 0, 0, 0);
+    const occ = new Date(occDate);
+    occ.setHours(0, 0, 0, 0);
+    if(occ < start) return false;
+    const diffDays = Math.round((occ - start) / (24 * 60 * 60 * 1000));
+    return diffDays % 7 === 0;
+}
+
+function normalizeData() {
+    let changed = false;
+    if(!data.schedules) data.schedules = {};
+    if(!data.exceptions) data.exceptions = {};
+
+    // Migrate old "stop schedule from this day onward" global deletes
+    // into schedule endDate + remove those global keys.
+    Object.keys(data.schedules).forEach(sid => {
+        const s = data.schedules[sid];
+        if(!s || s.endDate) return;
+        let d = new Date(s.startDate);
+        let firstDeleted = null;
+        const occ = [];
+        while(d.getFullYear() <= 2026) {
+            const dt = new Date(d);
+            occ.push(dt);
+            const legacyKey = `${dt.toDateString()}_${s.subject}`;
+            if(!firstDeleted && data.exceptions[legacyKey] === 'deleted') {
+                firstDeleted = new Date(dt);
+            }
+            d.setDate(d.getDate() + 7);
+        }
+        if(!firstDeleted) return;
+
+        const startIdx = occ.findIndex(x => sameCalendarDay(x, firstDeleted));
+        if(startIdx < 0) return;
+        let contiguousToEnd = true;
+        for(let i = startIdx; i < occ.length; i++) {
+            const k = `${occ[i].toDateString()}_${s.subject}`;
+            if(data.exceptions[k] !== 'deleted') {
+                contiguousToEnd = false;
+                break;
+            }
+        }
+        if(!contiguousToEnd) return;
+
+        const endDate = new Date(firstDeleted);
+        endDate.setDate(endDate.getDate() - 1);
+        s.endDate = toISODateLocal(endDate);
+        changed = true;
+
+        for(let i = startIdx; i < occ.length; i++) {
+            const k = `${occ[i].toDateString()}_${s.subject}`;
+            if(data.exceptions[k] === 'deleted') {
+                delete data.exceptions[k];
+                changed = true;
+            }
+        }
+    });
+
+    // Migrate remaining legacy single-day global deletes to schedule-specific keys.
+    Object.keys(data.exceptions).forEach(key => {
+        if(data.exceptions[key] !== 'deleted') return;
+        if(key.startsWith('SINGLE_') || key.startsWith('SCHED_')) return;
+        const sep = key.indexOf('_');
+        if(sep < 0) return;
+        const datePart = key.substring(0, sep);
+        const subject = key.substring(sep + 1);
+        const occDate = new Date(datePart);
+        if(Number.isNaN(occDate.getTime())) return;
+
+        const matches = Object.keys(data.schedules).filter(sid => {
+            const s = data.schedules[sid];
+            if(!s || s.subject !== subject) return false;
+            const end = s.endDate ? new Date(s.endDate) : null;
+            if(end && occDate > end) return false;
+            return isWeeklyOccurrence(s, occDate);
+        });
+
+        if(matches.length === 0) return;
+
+        matches.sort((a, b) => {
+            const sa = data.schedules[a];
+            const sb = data.schedules[b];
+            const da = new Date(sa.startDate).getTime();
+            const db = new Date(sb.startDate).getTime();
+            if(da !== db) return da - db;
+            return String(a).localeCompare(String(b));
+        });
+
+        const chosenSid = matches[0];
+        data.exceptions[`SCHED_${chosenSid}_${occDate.toDateString()}`] = 'deleted';
+        delete data.exceptions[key];
+        changed = true;
+    });
+
+    return changed;
+}
 
 function subjVar(subject) {
     if(!subject) return 'eng';
@@ -38,6 +152,11 @@ function fetchData() {
         data = body || { schedules: {}, exceptions: {} };
         if(!data.schedules) data.schedules = {};
         if(!data.exceptions) data.exceptions = {};
+        const migrated = normalizeData();
+        if(migrated) {
+            pushData();
+            return;
+        }
         renderCalendar();
         $('#syncStatus').fadeOut();
     }).fail(() => $('#syncStatus').show().text("Sync failed"));
@@ -57,10 +176,19 @@ function expandSchedules() {
     Object.keys(data.schedules).forEach(sid => {
         const s = data.schedules[sid];
         let d = new Date(s.startDate);
+        const end = s.endDate ? new Date(s.endDate) : null;
+        const timeStr = s.time || '';
+        const [hhRaw, mmRaw] = timeStr.split(':');
+        const hh = Number(hhRaw);
+        const mm = Number(mmRaw);
+        const timeMinutes = Number.isFinite(hh) && Number.isFinite(mm) ? (hh * 60 + mm) : Number.MAX_SAFE_INTEGER;
         while(d.getFullYear() <= 2026) {
-            const key = `${d.toDateString()}_${s.subject}`;
-            if(data.exceptions[key] !== 'deleted') {
-                list.push({ sid, subject: s.subject, date: new Date(d), key });
+            if(end && d > end) break;
+            const dateStr = d.toDateString();
+            const key = `SCHED_${sid}_${dateStr}`;
+            const legacyKey = `${dateStr}_${s.subject}`;
+            if(data.exceptions[key] !== 'deleted' && data.exceptions[legacyKey] !== 'deleted') {
+                list.push({ sid, subject: s.subject, date: new Date(d), key, time: timeStr, timeMinutes });
             }
             d.setDate(d.getDate() + 7);
         }
@@ -68,10 +196,16 @@ function expandSchedules() {
     Object.keys(data.exceptions).forEach(key => {
         if(key.includes("SINGLE_") && data.exceptions[key] !== 'deleted') {
             const parts = key.split('_');
-            list.push({ sid: 'one-off', subject: parts[2], date: new Date(parts[1]), key });
+            list.push({ sid: 'one-off', subject: parts[2], date: new Date(parts[1]), key, time: '', timeMinutes: Number.MAX_SAFE_INTEGER });
         }
     });
-    return list.sort((a,b) => a.date - b.date);
+    return list.sort((a, b) => {
+        const dateDiff = a.date - b.date;
+        if(dateDiff !== 0) return dateDiff;
+        const timeDiff = a.timeMinutes - b.timeMinutes;
+        if(timeDiff !== 0) return timeDiff;
+        return String(a.subject).localeCompare(String(b.subject));
+    });
 }
 
 function renderCalendar() {
@@ -179,11 +313,13 @@ function openDay(dateStr) {
 
     dayOcc.forEach(o => {
         const v = subjVar(o.subject);
+        const timeText = o.time ? `<div style="font-size:0.8rem; color:#64748b;">${o.time}</div>` : '';
         list.append(`
             <div style="border-bottom:1px solid #eee; padding:15px 0; display:flex; justify-content:space-between; align-items:center;">
-                <div style=\"display:flex; align-items:center; gap:12px;\"><div style=\"width:6px; height:36px; background:var(--${v}); border-radius:3px;\"></div><b>${o.subject}</b></div>
+                <div style=\"display:flex; align-items:center; gap:12px;\"><div style=\"width:6px; height:36px; background:var(--${v}); border-radius:3px;\"></div><div><b>${o.subject}</b>${timeText}</div></div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-outline" style="padding:5px 10px; font-size:0.7rem;" onclick="deleteSingle('${o.key}')">Delete Today</button>
+                    ${o.sid !== 'one-off' ? `<button class="btn btn-outline" style="padding:5px 10px; font-size:0.7rem;" onclick="openEditTimeModal('${o.sid}','${dateStr}')">Edit Time</button>` : ''}
                     ${o.sid !== 'one-off' ? `<button class="btn btn-primary" style="padding:5px 10px; font-size:0.7rem; background:#ef4444;" onclick="deleteAllSchedule('${o.sid}','${dateStr}')">Stop Schedule</button>` : ''}
                 </div>
             </div>
@@ -230,26 +366,85 @@ function addSingleLesson() {
     pushData(); closeModal('dayModal');
 }
 
-function deleteSingle(key) {
-    data.exceptions[key] = 'deleted';
-    pushData(); closeModal('dayModal');
-}
-
 function deleteAllSchedule(sid, fromDateStr) {
-    if(!confirm("Stop this schedule from selected date onward?")) return;
     const s = data.schedules[sid];
     if(!s) return;
-    const stopFrom = new Date(fromDateStr);
-    let d = new Date(s.startDate);
-    while(d.getFullYear() <= 2026) {
-        if(d >= stopFrom) {
-            const key = `${d.toDateString()}_${s.subject}`;
-            data.exceptions[key] = 'deleted';
+
+    if(!confirm("Stop this schedule from selected day onward?")) return;
+    const endDate = new Date(fromDateStr);
+    endDate.setDate(endDate.getDate() - 1);
+    s.endDate = toISODateLocal(endDate);
+
+    pushData();
+    closeModal('dayModal');
+}
+
+function deleteSingle(key) {
+    data.exceptions[key] = 'deleted';
+    if(key.startsWith('SINGLE_')) {
+        pushData();
+        closeModal('dayModal');
+        return;
+    }
+
+    // Legacy fallback (for older keys) - pin to a specific schedule when possible.
+    if(!key.startsWith('SCHED_')) {
+        const sep = key.indexOf('_');
+        if(sep > 0) {
+            const datePart = key.substring(0, sep);
+            const subject = key.substring(sep + 1);
+            const occDate = new Date(datePart);
+            if(!Number.isNaN(occDate.getTime())) {
+                const matches = Object.keys(data.schedules).filter(sid => {
+                    const s = data.schedules[sid];
+                    if(!s || s.subject !== subject) return false;
+                    const end = s.endDate ? new Date(s.endDate) : null;
+                    if(end && occDate > end) return false;
+                    return isWeeklyOccurrence(s, occDate);
+                });
+                if(matches.length > 0) {
+                    matches.sort((a, b) => {
+                        const sa = data.schedules[a];
+                        const sb = data.schedules[b];
+                        const da = new Date(sa.startDate).getTime();
+                        const db = new Date(sb.startDate).getTime();
+                        if(da !== db) return da - db;
+                        return String(a).localeCompare(String(b));
+                    });
+                    const chosenSid = matches[0];
+                    data.exceptions[`SCHED_${chosenSid}_${occDate.toDateString()}`] = 'deleted';
+                    delete data.exceptions[key];
+                }
+            }
         }
-        d.setDate(d.getDate() + 7);
     }
     pushData();
     closeModal('dayModal');
+}
+
+function openEditTimeModal(sid, dateStr) {
+    const s = data.schedules[sid];
+    if(!s) return;
+    editingScheduleId = sid;
+    editingScheduleDay = dateStr || '';
+    $('#editTimeSubject').text(s.subject || 'Lesson');
+    $('#editTimeDate').text(editingScheduleDay || '');
+    $('#editTimeIn').val(s.time || '10:00');
+    openModal('editTimeModal');
+}
+
+function saveScheduleTime() {
+    if(!editingScheduleId || !data.schedules[editingScheduleId]) return;
+    const newTime = ($('#editTimeIn').val() || '').trim();
+    if(!/^\d{2}:\d{2}$/.test(newTime)) {
+        alert('Please choose a valid time.');
+        return;
+    }
+    data.schedules[editingScheduleId].time = newTime;
+    renderCalendar();
+    if(editingScheduleDay) openDay(editingScheduleDay);
+    closeModal('editTimeModal');
+    pushData();
 }
 
 function openModal(id) { $(`#${id}`).css('display', 'flex'); }

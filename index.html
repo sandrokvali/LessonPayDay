@@ -111,6 +111,25 @@
         </div>
     </div>
 
+    <div id="editTimeModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Change Lesson Time</h3>
+                <p><span id="editTimeSubject">Lesson</span> • <span id="editTimeDate"></span></p>
+            </div>
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Time</label>
+                    <input type="time" id="editTimeIn" value="10:00">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary full-width" onclick="saveScheduleTime()">Save Time</button>
+                <button class="btn btn-text full-width" onclick="closeModal('editTimeModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
