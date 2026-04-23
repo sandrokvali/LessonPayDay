@@ -34,13 +34,13 @@ $(document).ready(() => { fetchData(); });
 
 function fetchData() {
     $('#syncStatus').show().text("Syncing...");
-    $.get(DB_URL, (res) => {
-        data = res || { schedules: {}, exceptions: {} };
+    $.get(DB_URL, (body) => {
+        data = body || { schedules: {}, exceptions: {} };
         if(!data.schedules) data.schedules = {};
         if(!data.exceptions) data.exceptions = {};
         renderCalendar();
         $('#syncStatus').fadeOut();
-    });
+    }).fail(() => $('#syncStatus').show().text("Sync failed"));
 }
 
 function pushData() {
@@ -49,7 +49,7 @@ function pushData() {
         url: DB_URL, type: 'PUT',
         data: JSON.stringify(data),
         success: () => fetchData()
-    });
+    }).fail(() => $('#syncStatus').show().text("Save failed"));
 }
 
 function expandSchedules() {
@@ -132,11 +132,12 @@ function markPaid(dateStr, subject) {
 function buildMonth(date, all) {
     const y = date.getFullYear(), m = date.getMonth();
     const firstDay = new Date(y, m, 1).getDay();
+    const mondayFirstOffset = (firstDay + 6) % 7;
     const lastDate = new Date(y, m + 1, 0).getDate();
     let html = `<div class="month-wrap"><div class="month-label">${new Intl.DateTimeFormat('en-US', {month:'long', year:'numeric'}).format(date)}</div><div class="grid">`;
-    ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach(wd => html += `<div class="wd">${wd}</div>`);
+    ['MON','TUE','WED','THU','FRI','SAT','SUN'].forEach(wd => html += `<div class="wd">${wd}</div>`);
 
-    for (let i = 0; i < firstDay; i++) html += `<div class="day"></div>`;
+    for (let i = 0; i < mondayFirstOffset; i++) html += `<div class="day"></div>`;
 
     for (let d = 1; d <= lastDate; d++) {
         const dObj = new Date(y, m, d);
@@ -183,7 +184,7 @@ function openDay(dateStr) {
                 <div style=\"display:flex; align-items:center; gap:12px;\"><div style=\"width:6px; height:36px; background:var(--${v}); border-radius:3px;\"></div><b>${o.subject}</b></div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-outline" style="padding:5px 10px; font-size:0.7rem;" onclick="deleteSingle('${o.key}')">Delete Today</button>
-                    ${o.sid !== 'one-off' ? `<button class="btn btn-primary" style="padding:5px 10px; font-size:0.7rem; background:#ef4444;" onclick="deleteAllSchedule('${o.sid}')">Stop Schedule</button>` : ''}
+                    ${o.sid !== 'one-off' ? `<button class="btn btn-primary" style="padding:5px 10px; font-size:0.7rem; background:#ef4444;" onclick="deleteAllSchedule('${o.sid}','${dateStr}')">Stop Schedule</button>` : ''}
                 </div>
             </div>
         `);
@@ -234,11 +235,21 @@ function deleteSingle(key) {
     pushData(); closeModal('dayModal');
 }
 
-function deleteAllSchedule(sid) {
-    if(confirm("Stop this schedule?")) {
-        delete data.schedules[sid];
-        pushData(); closeModal('dayModal');
+function deleteAllSchedule(sid, fromDateStr) {
+    if(!confirm("Stop this schedule from selected date onward?")) return;
+    const s = data.schedules[sid];
+    if(!s) return;
+    const stopFrom = new Date(fromDateStr);
+    let d = new Date(s.startDate);
+    while(d.getFullYear() <= 2026) {
+        if(d >= stopFrom) {
+            const key = `${d.toDateString()}_${s.subject}`;
+            data.exceptions[key] = 'deleted';
+        }
+        d.setDate(d.getDate() + 7);
     }
+    pushData();
+    closeModal('dayModal');
 }
 
 function openModal(id) { $(`#${id}`).css('display', 'flex'); }

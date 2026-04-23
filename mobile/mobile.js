@@ -5,6 +5,9 @@ const FIXED_RATE = 8;
 const PAY_SUBJECTS = ['English', 'Chemistry'];
 let payDaysMap = {}; 
 let showAllMonthsMobile = false;
+function pushData() {
+    $.ajax({ url: DB_URL, type: 'PUT', data: JSON.stringify(data), success: () => fetchData() });
+}
 
 function subjVar(subject) {
     if(!subject) return 'eng';
@@ -26,15 +29,17 @@ function unmarkPaidMobile(dateStr, subject) {
         if($('#summaryModal').is(':visible')) openPaySummary();
         if($('#dayModal').is(':visible')) openDay(dateStr);
         // persist change
-        $.ajax({ url: DB_URL, type: 'PUT', data: JSON.stringify(data), success: () => fetchData() });
+        pushData();
     }
 }
 
 $(document).ready(() => { fetchData(); });
 
 function fetchData() {
-    $.get(DB_URL, (res) => {
-        data = res || { schedules: {}, exceptions: {} };
+    $.get(DB_URL, (body) => {
+        data = body || { schedules: {}, exceptions: {} };
+        if(!data.schedules) data.schedules = {};
+        if(!data.exceptions) data.exceptions = {};
         renderCalendar();
     });
 }
@@ -114,17 +119,18 @@ function markPaidMobile(dateStr, subject) {
     if($('#summaryModal').is(':visible')) openPaySummary();
     if($('#dayModal').is(':visible')) openDay(dateStr);
     // persist to DB
-    $.ajax({ url: DB_URL, type: 'PUT', data: JSON.stringify(data), success: () => fetchData() });
+    pushData();
 }
 
 function buildMonth(date, all) {
     const y = date.getFullYear(), m = date.getMonth();
     const firstDay = new Date(y, m, 1).getDay();
+    const mondayFirstOffset = (firstDay + 6) % 7;
     const lastDate = new Date(y, m + 1, 0).getDate();
-    let html = `<div class="month-label">${new Intl.DateTimeFormat('en-US', {month:'long'}).format(date)}</div><div class="grid">`;
-    ['S','M','T','W','T','F','S'].forEach(w => html += `<div class="wd">${w}</div>`);
+    let html = `<section class="month-card"><div class="month-head"><div class="month-label">${new Intl.DateTimeFormat('en-US', {month:'long'}).format(date)}</div><div class="swipe-hint">Swipe week: ← →</div></div><div class="month-scroll"><div class="grid">`;
+    ['MON','TUE','WED','THU','FRI','SAT','SUN'].forEach(w => html += `<div class="wd">${w}</div>`);
 
-    for (let i = 0; i < firstDay; i++) html += `<div class="day"></div>`;
+    for (let i = 0; i < mondayFirstOffset; i++) html += `<div class="day"></div>`;
 
     for (let d = 1; d <= lastDate; d++) {
         const dObj = new Date(y, m, d);
@@ -142,7 +148,7 @@ function buildMonth(date, all) {
         });
         html += cell + `</div>`;
     }
-    return html + `</div>`;
+    return html + `</div></div></section>`;
 }
 
 function openDay(dateStr) {
